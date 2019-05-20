@@ -1,0 +1,28 @@
+$schema: "http://json-schema.org/draft-04/schema#"
+description: "Configuration file for Venus"
+properties:
+  output_dir:
+    description: "Name of Venus output directory"
+    type: string
+    format: directory
+    must_exist: False
+  samplesheet_fp:
+    description: "Path to sample sheet"
+    type: string
+    format: file
+    must_exist: True
+  qc_threads:
+    description: "Threads to use for quality control"
+    type: number
+    minimum: 1
+  ref_genomes_dir:
+    description: "Directory containing (only) one or more reference genome(s), in fasta format"
+    type: string
+    format: directory
+    must_exist: True
+required:
+  - output_dir
+  - samplesheet_fp
+target_requirements:
+  assemble:
+    - ref_genomes_dir

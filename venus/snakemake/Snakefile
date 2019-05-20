@@ -1,0 +1,31 @@
+#
+# Venus: Illumina WGS Assembly Pipeline
+# ----------------------------------------------------------------------
+#
+# This is the head file that imports the actual workflows. It also
+# loads the samplesheet and resolves all paths in the config file.
+
+from pkg_resources import resource_filename
+
+import snakemake.utils
+import venus
+
+snakemake.utils.min_version("5.4")
+
+samples = venus.parse_samples(config['samplesheet_fp'])
+config = venus.resolve_paths(config)
+
+output_dir = config['output_dir'] + '/'
+working_dir = output_dir + '_workspace/'
+reports_dir = output_dir + 'reports/'
+
+rule list_workflows:
+    message:
+        (
+            "\nAvailable workflows:\n"
+            " - qc_all: quality-filter and adapter-trim reads\n"
+            " - assemble_all: assemble contigs from each sample and assess assembly quality\n"
+            "Run a workflow with `venus run <configfile> <workflow>`"
+        )
+
+include: resource_filename("venus", "snakemake/qc.smk")
