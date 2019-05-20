@@ -21,3 +21,23 @@ cd venus
 pip install .
 ```
 
+### Getting started
+
+For the impatient:
+
+```bash
+# activate venus environment
+conda activate venus
+# change into your project directory
+cd my_project
+# create a default config file at `config.yml`
+venus init
+# edit config file as desired
+nano config.yml
+# edit the samplesheet as desired in the format sample_label,r1_fp,r2_fp
+nano samplesheet.csv
+# qc your samples
+venus run config.yml qc_all
+# assemble your samples
+venus run config.yml assemble_all
+```
