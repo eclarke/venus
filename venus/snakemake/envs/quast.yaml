@@ -1,0 +1,6 @@
+name: assembling
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - quast=5

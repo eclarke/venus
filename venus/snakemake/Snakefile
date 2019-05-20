@@ -29,3 +29,4 @@ rule list_workflows:
         )
 
 include: resource_filename("venus", "snakemake/qc.smk")
+include: resource_filename("venus", "snakemake/assemble.smk")

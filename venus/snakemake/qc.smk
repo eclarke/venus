@@ -29,13 +29,14 @@ rule qc:
     shell:
         (
             "fastp "
-            "-i {input.r1} -I {input.r2} "
-            "-o {output.r1} -O {output.r2} "
-            "-h {log.html} -j {log.json} "
-            "--thread {threads} "
+            " -i {input.r1} -I {input.r2}"
+            " -o {output.r1} -O {output.r2}"
+            " -h {log.html} -j {log.json}"
+            " --thread {threads}"
         )
 
 rule qc_all:
+    message: "QC'd sequences are in {}".format(qc_output_dir)
     input:
         r1 = expand(rules.qc.output.r1, sample = list(samples.sample_label)),
         r2 = expand(rules.qc.output.r2, sample = list(samples.sample_label))
