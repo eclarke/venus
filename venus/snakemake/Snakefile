@@ -6,11 +6,15 @@
 # loads the samplesheet and resolves all paths in the config file.
 
 from pkg_resources import resource_filename
+from pathlib import Path
 
 import snakemake.utils
 import venus
 
 snakemake.utils.min_version("5.4")
+
+wildcard_constraints:
+    sample="[^\/]+"  #Constrain to not include /
 
 samples = venus.parse_samples(config['samplesheet_fp'])
 config = venus.resolve_paths(config)
@@ -25,6 +29,7 @@ rule list_workflows:
             "\nAvailable workflows:\n"
             " - qc_all: quality-filter and adapter-trim reads\n"
             " - assemble_all: assemble contigs from each sample and assess assembly quality\n"
+            " - hybridize_all: create hybrid assemblies using long reads as scaffolding\n"
             "Run a workflow with `venus run <configfile> <workflow>`"
         )
 

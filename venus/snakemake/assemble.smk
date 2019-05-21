@@ -71,7 +71,7 @@ def ref_genome(wc):
     return expand(config.get('ref_genomes_dir') + '/{ref}', ref=refs)
 
 
-rule assemble_spades:
+rule assemble:
     input:
         r1 = rules.qc.output.r1,
         r2 = rules.qc.output.r2
@@ -94,10 +94,37 @@ rule assemble_spades:
             " --tmp-dir {params.temp_dir}"
         )
 
+rule hybrid_assemble:
+    input:
+        r1 = rules.qc.output.r1,
+        r2 = rules.qc.output.r2
+    output:
+        contigs = asm_output_dir + 'spades/hybrid/{sample}/scaffolds.fasta',
+        graph = asm_output_dir + 'spades/hybrid/{sample}/assembly_graph_with_scaffolds.gfa',
+    params:
+        output_dir = asm_output_dir + 'spades/{sample}_hybrid',
+        temp_dir = asm_working_dir + 'spades/{sample}_hybrid',
+        nanopore = config.get("nanopore_dir", '') + '/{sample}.fastq.gz'
+    conda:
+        resource_filename("venus", "snakemake/envs/spades.yaml")
+    threads:
+        config.get('assembly_threads', 8)
+    shell:
+        (
+            "[ -f {params.nanopore} ] && "
+            "spades.py "
+            " -o {params.output_dir}"
+            " -1 {input.r1} -2 {input.r2}"
+            " --nanopore {params.nanopore}"
+            " -t {threads}"
+            " --tmp-dir {params.temp_dir} "
+            "|| {{ echo \"Error: {params.nanopore} file not found\"; exit 1; }}"
+        )
+
 rule assess_assembly_quast:
     input:
         reference=ref_genome,
-        assembly=rules.assemble_spades.output.contigs
+        assembly=rules.assemble.output.contigs
     output:
         directory(asm_reports_dir + '{sample}/quast')
     conda:
@@ -112,10 +139,36 @@ rule assess_assembly_quast:
         -t {threads}
         """
 
+rule assess_hybrid_assembly_quast:
+    input:
+        reference=ref_genome,
+        assembly=rules.hybrid_assemble.output.contigs
+    output:
+        directory(asm_reports_dir + 'hybrid/{sample}/quast')
+    conda:
+        resource_filename("venus", "snakemake/envs/quast.yaml")
+    threads:
+        config.get("assembler_threads", 8)    
+    shell:
+        """
+        quast {input.assembly} \
+        -o {output} \
+        -r {input.reference} \
+        -t {threads}
+        """
+        
 rule assemble_all:
     message: "Assemblies are in {}".format(asm_output_dir)
     input:
         contigs=expand(
-            rules.assemble_spades.output.contigs, sample=list(samples.sample_label)),
+            rules.assemble.output.contigs, sample=list(samples.sample_label)),
         reports=expand(
             rules.assess_assembly_quast.output, sample=list(samples.sample_label))
+
+rule hybrid_assemble_all:
+    message: "Assemblies are in {}".format(asm_output_dir)
+    input:
+        contigs=expand(
+            rules.hybrid_assemble.output.contigs, sample=list(samples.sample_label)),
+        reports=expand(
+            rules.assess_hybrid_assembly_quast.output, sample=list(samples.sample_label))

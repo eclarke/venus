@@ -20,9 +20,18 @@ properties:
     type: string
     format: directory
     must_exist: True
+  nanopore_dir:
+    description: "Directory containing nanopore reads named in the format {sample}.fastq.gz"
+    type: string
+    format: directory
+    must_exist: True
 required:
   - output_dir
   - samplesheet_fp
 target_requirements:
   assemble:
     - ref_genomes_dir
+    - nanopore_dir
+  hybrid_assemble:
+    - ref_genomes_dir
+    - nanopore_dir
