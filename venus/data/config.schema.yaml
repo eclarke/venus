@@ -31,7 +31,6 @@ required:
 target_requirements:
   assemble:
     - ref_genomes_dir
-    - nanopore_dir
   hybrid_assemble:
     - ref_genomes_dir
     - nanopore_dir

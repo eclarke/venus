@@ -102,8 +102,8 @@ rule hybrid_assemble:
         contigs = asm_output_dir + 'spades/hybrid/{sample}/scaffolds.fasta',
         graph = asm_output_dir + 'spades/hybrid/{sample}/assembly_graph_with_scaffolds.gfa',
     params:
-        output_dir = asm_output_dir + 'spades/{sample}_hybrid',
-        temp_dir = asm_working_dir + 'spades/{sample}_hybrid',
+        output_dir = asm_output_dir + 'spades/hybrid/{sample}',
+        temp_dir = asm_working_dir + 'spades/hybrid/{sample}',
         nanopore = config.get("nanopore_dir", '') + '/{sample}.fastq.gz'
     conda:
         resource_filename("venus", "snakemake/envs/spades.yaml")
