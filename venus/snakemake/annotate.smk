@@ -54,6 +54,28 @@ rule annotate_rgi:
             "--low_quality --clean"
         )
 
+rule rgi_heatmap:
+    input:
+        expand(
+            rules.annotate_rgi.output,
+            sample=list(samples.sample_label))
+    output:
+        directory(ann_reports_dir + 'rgi5/heatmaps')
+    params:
+        input_dir = ann_output_dir + 'rgi5',
+        output = ann_reports_dir + 'rgi5/heatmaps/rgi_heatmap'
+    shell:
+        (
+            "mkdir -p {output} && "
+            "rgi heatmap "
+            "-i {params.input_dir} "
+            "-cat gene_family "
+            "-o {params.output}"
+        )
+        
+
 rule annotate_all:
-    input: expand(rules.annotate_rgi.output, sample=list(samples.sample_label))
+    input:
+        expand(rules.annotate_rgi.output, sample=list(samples.sample_label)),
+        rules.rgi_heatmap.output
     
