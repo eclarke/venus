@@ -14,7 +14,7 @@ asm_reports_dir = reports_dir + 'assemble/'
 rule create_ref_sketch:
     '''Creates a mash sketch of all provided reference genomes.'''
     output:
-        asm_working_dir + 'reference_genomes.msh'
+        temp(asm_working_dir + 'reference_genomes.msh')
     params:
         k = config.get('mash_k_size', 32),
         ref_dir = config.get('ref_genomes_dir')
@@ -56,14 +56,14 @@ checkpoint mark_ref_genome:
     input:
         rules.calc_ref_dist_mash.output
     output:
-        directory(asm_working_dir + '{sample}/ref_genome')
+        temp(directory(asm_working_dir + '{sample}/ref_genome'))
     shell:
         """
         mkdir -p {output} &&
         ref=$(basename $(head -1 {input} | cut -f1)) &&
         touch {output}/$ref
         """
-
+        
 def ref_genome(wc):
     '''Returns the location of the ref genome in the ref genome directory'''
     ref_dir = checkpoints.mark_ref_genome.get(**wc).output[0]
@@ -76,11 +76,11 @@ rule assemble:
         r1 = rules.qc.output.r1,
         r2 = rules.qc.output.r2
     output:
-        contigs = asm_output_dir + 'spades/{sample}/scaffolds.fasta',
-        graph = asm_output_dir + 'spades/{sample}/assembly_graph_with_scaffolds.gfa',
+        contigs = asm_output_dir + 'sr/{sample}/scaffolds.fasta',
+        graph = asm_output_dir + 'sr/{sample}/assembly_graph_with_scaffolds.gfa',
     params:
-        output_dir = asm_output_dir + 'spades/{sample}',
-        temp_dir = asm_working_dir + 'spades/{sample}'
+        output_dir = asm_output_dir + 'sr/{sample}',
+        temp_dir = asm_working_dir + 'sr/{sample}'
     conda:
         resource_filename("venus", "snakemake/envs/spades.yaml")
     threads:
@@ -99,11 +99,11 @@ rule hybrid_assemble:
         r1 = rules.qc.output.r1,
         r2 = rules.qc.output.r2
     output:
-        contigs = asm_output_dir + 'spades/hybrid/{sample}/scaffolds.fasta',
-        graph = asm_output_dir + 'spades/hybrid/{sample}/assembly_graph_with_scaffolds.gfa',
+        contigs = asm_output_dir + 'hybrid/{sample}/scaffolds.fasta',
+        graph = asm_output_dir + 'hybrid/{sample}/assembly_graph_with_scaffolds.gfa',
     params:
-        output_dir = asm_output_dir + 'spades/hybrid/{sample}',
-        temp_dir = asm_working_dir + 'spades/hybrid/{sample}',
+        output_dir = asm_output_dir + 'hybrid/{sample}',
+        temp_dir = asm_working_dir + 'hybrid/{sample}',
         nanopore = config.get("nanopore_dir", '') + '/{sample}.fastq.gz'
     conda:
         resource_filename("venus", "snakemake/envs/spades.yaml")
@@ -121,7 +121,7 @@ rule hybrid_assemble:
             "|| {{ echo \"Error: {params.nanopore} file not found\"; exit 1; }}"
         )
 
-rule assess_assembly_quast:
+rule assess_assembly:
     input:
         reference=ref_genome,
         assembly=rules.assemble.output.contigs
@@ -139,7 +139,7 @@ rule assess_assembly_quast:
         -t {threads}
         """
 
-rule assess_hybrid_assembly_quast:
+rule assess_hybrid_assembly:
     input:
         reference=ref_genome,
         assembly=rules.hybrid_assemble.output.contigs
@@ -156,19 +156,32 @@ rule assess_hybrid_assembly_quast:
         -r {input.reference} \
         -t {threads}
         """
+
+rule force_assembly_reassessment:
+    """Removes distance calculations and QUAST reports to force re-evaluation of reference genomes."""
+    params:
+        distances=(
+            expand(rules.calc_ref_dist_mash.output, sample=list(samples.sample_label))),            
+        reports=(
+            expand(rules.assess_assembly.output, sample=list(samples.sample_label)),
+            expand(rules.assess_hybrid_assembly.output, sample=list(samples.sample_label))
+        )
+    shell: "rm -f {params.distances} {params.reports}"
         
 rule assemble_all:
+    """Create short read-only assemblies for all samples."""
     message: "Assemblies are in {}".format(asm_output_dir)
     input:
         contigs=expand(
             rules.assemble.output.contigs, sample=list(samples.sample_label)),
         reports=expand(
-            rules.assess_assembly_quast.output, sample=list(samples.sample_label))
+            rules.assess_assembly.output, sample=list(samples.sample_label))
 
 rule hybrid_assemble_all:
+    """Create hybrid assemblies for all samples."""
     message: "Assemblies are in {}".format(asm_output_dir)
     input:
         contigs=expand(
             rules.hybrid_assemble.output.contigs, sample=list(samples.sample_label)),
         reports=expand(
-            rules.assess_hybrid_assembly_quast.output, sample=list(samples.sample_label))
+            rules.assess_hybrid_assembly.output, sample=list(samples.sample_label))

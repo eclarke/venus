@@ -20,18 +20,21 @@ samples = venus.parse_samples(config['samplesheet_fp'])
 config = venus.resolve_paths(config)
 
 output_dir = config['output_dir'] + '/'
-working_dir = output_dir + '_workspace/'
+working_dir = output_dir + '.venus_workspace/'
 reports_dir = output_dir + 'reports/'
 
-rule list_workflows:
+rule print_help:
     message:
         (
             "\nAvailable workflows:\n"
             " - qc_all: quality-filter and adapter-trim reads\n"
             " - assemble_all: assemble contigs from each sample and assess assembly quality\n"
-            " - hybridize_all: create hybrid assemblies using long reads as scaffolding\n"
+            " - hybrid_assemble_all: create hybrid assemblies using long reads as scaffolding\n"
+            "\nUtility workflows:\n"
+            " - clean_ref_dist: remove previous ref genome distance calculations to force assembly re-evaluation\n\nn"
             "Run a workflow with `venus run <configfile> <workflow>`"
         )
 
 include: resource_filename("venus", "snakemake/qc.smk")
 include: resource_filename("venus", "snakemake/assemble.smk")
+include: resource_filename("venus", "snakemake/annotate.smk")

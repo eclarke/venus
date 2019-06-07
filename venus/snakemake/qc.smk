@@ -36,6 +36,7 @@ rule qc:
         )
 
 rule qc_all:
+    """Quality-filter and adapter-trim all samples."""
     message: "QC'd sequences are in {}".format(qc_output_dir)
     input:
         r1 = expand(rules.qc.output.r1, sample = list(samples.sample_label)),

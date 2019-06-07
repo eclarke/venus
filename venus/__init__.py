@@ -119,7 +119,6 @@ def validate(data, schema):
     
     errors = []
     
-    # Defer to snakemake's validate for handling samplesheet validation
     if not isinstance(data, dict):
         for row in data.to_dict('records'):
             for ve in validator.iter_errors(row):

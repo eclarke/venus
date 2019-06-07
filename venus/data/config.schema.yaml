@@ -25,6 +25,11 @@ properties:
     type: string
     format: directory
     must_exist: True
+  rgi_card_fp:
+    description: "Path to the card.json file from the CARD database"
+    type: string
+    format: file
+    must_exist: True
 required:
   - output_dir
   - samplesheet_fp
@@ -34,3 +39,5 @@ target_requirements:
   hybrid_assemble:
     - ref_genomes_dir
     - nanopore_dir
+  annotate:
+    - rgi_card_fp
